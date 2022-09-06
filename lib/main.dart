@@ -12,6 +12,7 @@ void main() async {
       .ensureInitialized(); // makes sure that the application has been setup properly
   await loadConfig();
   regiterHTTPService();
+  // await GetIt.instance.get<HTTPService>().get("/coins/bitcoin");
   runApp(const MyApp());
 }
 
