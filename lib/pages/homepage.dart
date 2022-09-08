@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:crypto_flutter/pages/details_page.dart';
 import 'package:crypto_flutter/services/http_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -13,7 +14,7 @@ class Homepage extends StatefulWidget {
 
 class _HomepageState extends State<Homepage> {
   double? _deviceHeight, _deviceWidth;
-
+  String? _selectedCoin = "bitcoin";
   HTTPService? _http;
 
   @override
@@ -44,19 +45,27 @@ class _HomepageState extends State<Homepage> {
 
   Widget _dataWidgets() {
     return FutureBuilder(
-      future: _http!.get("/coins/bitcoin"),
+      future: _http!.get("/coins/$_selectedCoin"),
       builder: (BuildContext _context, AsyncSnapshot _snapshot) {
         if (_snapshot.hasData) {
           Map _data = jsonDecode(_snapshot.data.toString());
           num _cadPrice = _data["market_data"]["current_price"]["cad"];
           num _change24h = _data["market_data"]["price_change_percentage_24h"];
           String _coinDesc = _data["description"]["en"];
+          Map _exchangeRates = _data["market_data"]["current_price"];
           return Column(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             mainAxisSize: MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _coinImageWidget(_data["image"]["large"]),
+              GestureDetector(
+                  onDoubleTap: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (BuildContext _context) {
+                      return DetailsPage(rates: _exchangeRates);
+                    }));
+                  },
+                  child: _coinImageWidget(_data["image"]["large"])),
               _currentPriceWidget(_cadPrice),
               _percentageChangeWidget(_change24h),
               _coinDescription(_coinDesc)
@@ -116,24 +125,35 @@ class _HomepageState extends State<Homepage> {
   }
 
   Widget _selectedCoinDropDown() {
-    List<String> _coins = ["bitcoin"];
-    List<DropdownMenuItem> _items = _coins
+    List<String> _coins = [
+      "bitcoin",
+      "ethereum",
+      "tether",
+      "cardano",
+      "ripple",
+      "solana"
+    ];
+    List<DropdownMenuItem<String>> _items = _coins
         .map(
           (e) => DropdownMenuItem(
             value: e,
             child: Text(
               e,
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.w600),
             ),
           ),
         )
         .toList();
     return DropdownButton(
-      value: _coins.first,
+      value: _selectedCoin,
       items: _items,
-      onChanged: (_value) {},
-      dropdownColor: Colors.green,
+      onChanged: (dynamic _value) {
+        setState(() {
+          _selectedCoin = _value;
+        });
+      },
+      dropdownColor: Color.fromARGB(255, 63, 89, 101),
       iconSize: 30,
       icon: const Icon(
         Icons.arrow_drop_down_circle_sharp,
